@@ -37,6 +37,17 @@ if(NOT _VCPKG_LINUX_TOOLCHAIN)
         set(CMAKE_SYSTEM_PROCESSOR riscv64 CACHE STRING "")
     endif()
 
+    # A port may pass vcpkg's triplet architecture name as CMAKE_SYSTEM_PROCESSOR
+    # (arrow 18.1.0 passes -DCMAKE_SYSTEM_PROCESSOR=${VCPKG_TARGET_ARCHITECTURE}).
+    # That reaches the cache before this file runs, so the non-FORCE set() above
+    # cannot correct it, and the native build below is mistaken for a cross build.
+    # Normalize to the GNU processor name.
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x64")
+        set(CMAKE_SYSTEM_PROCESSOR x86_64 CACHE STRING "" FORCE)
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+        set(CMAKE_SYSTEM_PROCESSOR aarch64 CACHE STRING "" FORCE)
+    endif()
+
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR AND NOT CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL CMAKE_SYSTEM_PROCESSOR)
         if(NOT(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686" AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64"))
             set(GNU_TRIPLET "${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
